@@ -1,10 +1,9 @@
-from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 import requests
-import json
 from datetime import datetime, timedelta
 import sqlite3
 from time import time, sleep
 import numpy as np
+import pandas as pd
 
 url = "https://www.binance.com"
 endPoint = "/bapi/c2c/v2/friendly/c2c/adv/search"
