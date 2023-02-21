@@ -215,35 +215,25 @@ elif choose == 2:
         count += 1
         sleep(60 - time() % 60)
 
-'''
-asset = str(input("Type Asset Name (USDT, BTC, ..): "))
-tradeType = str(input('Input Trade Type(BUY or SELL): '))
-fiat = str(input('Fiat currency(MMK,USD...): '))
-page = int(input('Input Page Number(1 or 2 ...): '))
-row = int(input('Input Row Number(1 or 2 ...): '))
-
-
-# Timer for 1 minute
-while True:
-    print('-------------------')
-
-    # for buy_price and sell_price table
-    for page in range(pages):
-        page = page+1
-        #tradeType = 'BUY' # 'BUY' or 'SELL'
+elif choose == 4:
+    count = 1
+    asset = str(input("Type Asset Name (USDT, BTC, ..): "))
+    tradeType_input = str(input('Input Trade Type(BUY or SELL): '))
+    fiat = str(input('Fiat currency(MMK,USD...): '))
+    # Timer for 1 minute
+    while True:
+        # for buy_price_chart and sell_price_chart table
         tradeType = tradeType_input
-
         options = {
             'asset': asset,
             'tradeType': tradeType,
             'fiat': fiat,
             'transAmount': 0,
             'order': '',
-            'page': page,
-            'rows': row,
+            'page': 1,
+            'rows': 1,
             'filterType' : 'all'
         }
-
         r = requests.post(url+endPoint, json=options)
         r = r.json()
         data = r['data']
@@ -253,9 +243,7 @@ while True:
         data = r['data']
         #total = r['total']
         success = r['success']
-
         for d in data:
-
             tradeType = d['adv']['tradeType']
             asset = d['adv']['asset']
             fiatUnit = d['adv']['fiatUnit']
@@ -265,15 +253,12 @@ while True:
             #maxSingleTransAmount = d['adv']['maxSingleTransAmount']
             tradeMethodName = d['adv']['tradeMethods'][0]['tradeMethodName']
             dynamicMaxSingleTransAmount = int(float(d['adv']['dynamicMaxSingleTransAmount']))
-
             nickName = d['advertiser']['nickName']
             monthOrderCount = d['advertiser']['monthOrderCount']
             monthFinishRate = d['advertiser']['monthFinishRate']
             userType = d['advertiser']['userType']
             userGrade = d['advertiser']['userGrade']
-
             date = datetime.now()
-
             datass = [
                     count,
                     date,
@@ -291,19 +276,13 @@ while True:
                     userType,
                     userGrade
                     ]
-
             #data = (datass[0],datass[1],datass[2],datass[3],datass[4],datass[5],datass[6],datass[7],datass[8],datass[9],datass[10],datass[11],datass[12],datass[13])
             count += 1
-            #print(datass)
-
             if tradeType_input == 'BUY' or tradeType_input == 'buy':
-
                 # Create sqlite3 database
                 conn = sqlite3.connect('data/data.db')
-
                 c = conn.cursor()
-
-                c.execute("""CREATE TABLE IF NOT EXISTS sell_price(
+                c.execute("""CREATE TABLE IF NOT EXISTS sell_price_chart(
                             date text,
                             tradeType text,
                             asset text,
@@ -319,8 +298,7 @@ while True:
                             userType text,
                             userGrade int
                     )""")
-
-                c.execute("INSERT INTO sell_price VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
+                c.execute("INSERT INTO sell_price_chart VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
                         {
                             'date' : date,
                             'tradeType' : tradeType,
@@ -338,19 +316,13 @@ while True:
                             'userGrade' : userGrade
                         }
                     )
-
                 conn.commit()
-
                 conn.close()
-
             elif tradeType_input == 'SELL' or tradeType_input == 'sell':
-
                 # Create sqlite3 database
                 conn = sqlite3.connect('data/data.db')
-
                 c = conn.cursor()
-
-                c.execute("""CREATE TABLE IF NOT EXISTS buy_price(
+                c.execute("""CREATE TABLE IF NOT EXISTS buy_price_chart(
                             date text,
                             tradeType text,
                             asset text,
@@ -366,8 +338,7 @@ while True:
                             userType text,
                             userGrade int
                     )""")
-
-                c.execute("INSERT INTO buy_price VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
+                c.execute("INSERT INTO buy_price_chart VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
                         {
                             'date' : date,
                             'tradeType' : tradeType,
@@ -385,58 +356,79 @@ while True:
                             'userGrade' : userGrade
                         }
                     )
-
                 conn.commit()
-
                 conn.close()
+        # Create sqlite3 database
+        conn = sqlite3.connect('data/data.db')
+        c = conn.cursor()
+        if tradeType_input == 'BUY' or tradeType_input == 'buy':
+            c.execute("SELECT oid,* FROM sell_price_chart ORDER BY date DESC LIMIT 1")
+            min_prices = c.fetchall()
+            for min_price in min_prices:
+                #min_price = min_price[4]
+                df = pd.DataFrame(min_price)
+                print(df)
+            c.execute("SELECT MIN(price),oid,* FROM sell_price")
+            min_prices = c.fetchall()
+            for min_price in min_prices:
+                print(min_price)
+            c.execute("SELECT oid,* FROM sell_price")
+            records = c.fetchall()
+            for record in records:
+                print(record)
+            c.execute("SELECT MAX(price),oid,* FROM sell_price")
+            max_prices = c.fetchall()
+            for max_price in max_prices:
+                print(max_price)
+            c.execute("SELECT * FROM sell_price ORDER BY date DESC LIMIT 1")
+            records = c.fetchall()
+            for record in records:
+                print(record)
+        elif tradeType_input == 'SELL' or tradeType_input == 'sell':
+            c.execute("SELECT oid,* FROM buy_price_chart ORDER BY date DESC LIMIT 1")
+            max_prices = c.fetchall()
+            for max_price in max_prices:
+                #max_price = max_price[4]
+                print(max_price)
+            c.execute("SELECT MAX(price),oid,* FROM buy_price")
+            max_prices = c.fetchall()
+            for max_price in max_prices:
+                print(max_price)
+            c.execute("SELECT oid,* FROM buy_price")
+            records = c.fetchall()
+            for record in records:
+                print(record)
+            c.execute("SELECT MIN(price),oid,* FROM buy_price")
+            min_prices = c.fetchall()
+            for min_price in min_prices:
+                print(min_price)
+            c.execute("SELECT * FROM buy_price ORDER BY date DESC LIMIT 1")
+            records = c.fetchall()
+            for record in records:
+                print(record)
+        conn.commit()
+        conn.close()
 
-    # for buy_price_chart and sell_price_chart table
-
-    tradeType = tradeType_input
-    options = {
-        'asset': asset,
-        'tradeType': tradeType,
-        'fiat': fiat,
-        'transAmount': 0,
-        'order': '',
-        'page': 1,
-        'rows': 1,
-        'filterType' : 'all'
-    }
-
-    r = requests.post(url+endPoint, json=options)
-    r = r.json()
-    data = r['data']
-    code = r['code']
-    message = r['message']
-    messageDetail = r['messageDetail']
-    data = r['data']
-    #total = r['total']
-    success = r['success']
-
-    for d in data:
-
-        tradeType = d['adv']['tradeType']
-        asset = d['adv']['asset']
-        fiatUnit = d['adv']['fiatUnit']
-        price = d['adv']['price']
-        tradableQuantity = d['adv']['tradableQuantity']
-        minSingleTransAmount = int(float(d['adv']['minSingleTransAmount']))
-        #maxSingleTransAmount = d['adv']['maxSingleTransAmount']
-        tradeMethodName = d['adv']['tradeMethods'][0]['tradeMethodName']
-        dynamicMaxSingleTransAmount = int(float(d['adv']['dynamicMaxSingleTransAmount']))
-
-        nickName = d['advertiser']['nickName']
-        monthOrderCount = d['advertiser']['monthOrderCount']
-        monthFinishRate = d['advertiser']['monthFinishRate']
-        userType = d['advertiser']['userType']
-        userGrade = d['advertiser']['userGrade']
-
-        date = datetime.now()
-
+        # Create pandas dataframe
+        datas = {
+            'datetime' : [datetime.now()],
+            'tradeType': [tradeType],
+            'asset' : [asset],
+            'price' : [price],
+            'fiatUnit' : [fiatUnit],
+            'tradableQuantity' : [tradableQuantity],
+            'minAmount' : [minSingleTransAmount],
+            'maxAmount' : [dynamicMaxSingleTransAmount],
+            'trader' : [nickName],
+            'paymentMethod' : [tradeMethodName],
+            'monthOrderCount' : [monthOrderCount],
+            'monthFinishRate' : [monthFinishRate],
+            'userType' : [userType],
+            'userGrade' : [userGrade]
+            }
         datass = [
                 count,
-                date,
+                datetime.now(),
                 tradeType,
                 asset,
                 price,
@@ -451,233 +443,234 @@ while True:
                 userType,
                 userGrade
                 ]
+        df = pd.DataFrame.from_dict(datas, orient='columns')
+        #df = pd.DataFrame(datas)
+        #df = pd.DataFrame.from_dict(datas, orient='columns')  #orient='index',orient='columns', orient='tight'
+        #df.to_csv('data/name.csv')
+        print(df)
+        print('----------------------------------------***----------------------------------------')
+        print(f'{tradeType}')
+        print(f'Price is                                {price} {fiatUnit}')
+        #print(f'Asset is {asset}')
+        #print(fiatUnit)
+        print(f'Available {tradeType.lower()} amount is                {tradableQuantity} {asset}')
+        print(f'{tradeType.capitalize()} limit is                           {minSingleTransAmount} {fiatUnit} ~ {dynamicMaxSingleTransAmount} {fiatUnit}')
+        #print(dynamicMaxSingleTransAmount)
+        print(f'Trader is                               {nickName}')
+        print(f'Payment method is                       {tradeMethodName}')
+        print(f'Trader monthly order is                 {monthOrderCount}')
+        print(f'Trader monthly order completion is      {monthFinishRate*100} %')
+        print(f'Trader type is                          {userType}')
+        print(f'Trader grade is                         {userGrade}')
+        print('----------------------------------------***----------------------------------------')
+        
+        sleep(60 - time() % 60)
+elif choose == 3:
+    count = 1
+    asset = str(input("Type Asset Name (USDT, BTC, ..): "))
+    tradeType_input = str(input('Input Trade Type(BUY or SELL): '))
+    fiat = str(input('Fiat currency(MMK,USD...): '))
+    pages = int(input('Input Page Number(1 or 2 ...): '))
+    row = int(input('Input Row Number(1 or 2 ...): '))
+    # Timer for 1 minute
+    while True:
+        print('-------------------')
+        # for buy_price and sell_price table
+        for page in range(pages):
+            page = page+1
+            #tradeType = 'BUY' # 'BUY' or 'SELL'
+            tradeType = tradeType_input
+            options = {
+                'asset': asset,
+                'tradeType': tradeType,
+                'fiat': fiat,
+                'transAmount': 0,
+                'order': '',
+                'page': page,
+                'rows': row,
+                'filterType' : 'all'
+            }
+            r = requests.post(url+endPoint, json=options)
+            r = r.json()
+            data = r['data']
+            code = r['code']
+            message = r['message']
+            messageDetail = r['messageDetail']
+            data = r['data']
+            #total = r['total']
+            success = r['success']
+            for d in data:
+                tradeType = d['adv']['tradeType']
+                asset = d['adv']['asset']
+                fiatUnit = d['adv']['fiatUnit']
+                price = d['adv']['price']
+                tradableQuantity = d['adv']['tradableQuantity']
+                minSingleTransAmount = int(float(d['adv']['minSingleTransAmount']))
+                #maxSingleTransAmount = d['adv']['maxSingleTransAmount']
+                tradeMethodName = d['adv']['tradeMethods'][0]['tradeMethodName']
+                dynamicMaxSingleTransAmount = int(float(d['adv']['dynamicMaxSingleTransAmount']))
+                nickName = d['advertiser']['nickName']
+                monthOrderCount = d['advertiser']['monthOrderCount']
+                monthFinishRate = d['advertiser']['monthFinishRate']
+                userType = d['advertiser']['userType']
+                userGrade = d['advertiser']['userGrade']
+                date = datetime.now()
+                datass = [
+                        count,
+                        date,
+                        tradeType,
+                        asset,
+                        price,
+                        fiatUnit,
+                        tradableQuantity,
+                        minSingleTransAmount,
+                        dynamicMaxSingleTransAmount,
+                        nickName,
+                        tradeMethodName,
+                        monthOrderCount,
+                        monthFinishRate,
+                        userType,
+                        userGrade
+                        ]
+                #data = (datass[0],datass[1],datass[2],datass[3],datass[4],datass[5],datass[6],datass[7],datass[8],datass[9],datass[10],datass[11],datass[12],datass[13])
+                count += 1
+                #print(datass)
+                if tradeType_input == 'BUY' or tradeType_input == 'buy':
+                    # Create sqlite3 database
+                    conn = sqlite3.connect('data/data.db')
+                    c = conn.cursor()
+                    c.execute("""CREATE TABLE IF NOT EXISTS sell_price(
+                                date text,
+                                tradeType text,
+                                asset text,
+                                price int,
+                                fiatUnit text,
+                                tradableQuantity float,
+                                minSingleTransAmount int,
+                                dynamicMaxSingleTransAmount int,
+                                nickName text,
+                                tradeMethodName text,
+                                monthOrderCount int,
+                                monthFinishRate float,
+                                userType text,
+                                userGrade int
+                        )""")
+                    c.execute("INSERT INTO sell_price VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
+                            {
+                                'date' : date,
+                                'tradeType' : tradeType,
+                                'asset' : asset,
+                                'price' : price,
+                                'fiatUnit' : fiatUnit,
+                                'tradableQuantity' : tradableQuantity,
+                                'minSingleTransAmount' : minSingleTransAmount,
+                                'dynamicMaxSingleTransAmount' : dynamicMaxSingleTransAmount,
+                                'nickName' : nickName,
+                                'tradeMethodName' : tradeMethodName,
+                                'monthOrderCount' : monthOrderCount,
+                                'monthFinishRate' : monthFinishRate,
+                                'userType' : userType,
+                                'userGrade' : userGrade
+                            }
+                        )
+                    conn.commit()
+                    conn.close()
+                elif tradeType_input == 'SELL' or tradeType_input == 'sell':
 
-        #data = (datass[0],datass[1],datass[2],datass[3],datass[4],datass[5],datass[6],datass[7],datass[8],datass[9],datass[10],datass[11],datass[12],datass[13])
-        count += 1
+                    # Create sqlite3 database
+                    conn = sqlite3.connect('data/data.db')
+                    c = conn.cursor()
+                    c.execute("""CREATE TABLE IF NOT EXISTS buy_price(
+                                date text,
+                                tradeType text,
+                                asset text,
+                                price int,
+                                fiatUnit text,
+                                tradableQuantity float,
+                                minSingleTransAmount int,
+                                dynamicMaxSingleTransAmount int,
+                                nickName text,
+                                tradeMethodName text,
+                                monthOrderCount int,
+                                monthFinishRate float,
+                                userType text,
+                                userGrade int
+                        )""")
+                    c.execute("INSERT INTO buy_price VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
+                            {
+                                'date' : date,
+                                'tradeType' : tradeType,
+                                'asset' : asset,
+                                'price' : price,
+                                'fiatUnit' : fiatUnit,
+                                'tradableQuantity' : tradableQuantity,
+                                'minSingleTransAmount' : minSingleTransAmount,
+                                'dynamicMaxSingleTransAmount' : dynamicMaxSingleTransAmount,
+                                'nickName' : nickName,
+                                'tradeMethodName' : tradeMethodName,
+                                'monthOrderCount' : monthOrderCount,
+                                'monthFinishRate' : monthFinishRate,
+                                'userType' : userType,
+                                'userGrade' : userGrade
+                            }
+                        )
+                    conn.commit()
+                    conn.close()
 
-        if tradeType_input == 'BUY' or tradeType_input == 'buy':
-
-            # Create sqlite3 database
-            conn = sqlite3.connect('data/data.db')
-
-            c = conn.cursor()
-
-            c.execute("""CREATE TABLE IF NOT EXISTS sell_price_chart(
-                        date text,
-                        tradeType text,
-                        asset text,
-                        price int,
-                        fiatUnit text,
-                        tradableQuantity float,
-                        minSingleTransAmount int,
-                        dynamicMaxSingleTransAmount int,
-                        nickName text,
-                        tradeMethodName text,
-                        monthOrderCount int,
-                        monthFinishRate float,
-                        userType text,
-                        userGrade int
-                )""")
-
-            c.execute("INSERT INTO sell_price_chart VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
-                    {
-                        'date' : date,
-                        'tradeType' : tradeType,
-                        'asset' : asset,
-                        'price' : price,
-                        'fiatUnit' : fiatUnit,
-                        'tradableQuantity' : tradableQuantity,
-                        'minSingleTransAmount' : minSingleTransAmount,
-                        'dynamicMaxSingleTransAmount' : dynamicMaxSingleTransAmount,
-                        'nickName' : nickName,
-                        'tradeMethodName' : tradeMethodName,
-                        'monthOrderCount' : monthOrderCount,
-                        'monthFinishRate' : monthFinishRate,
-                        'userType' : userType,
-                        'userGrade' : userGrade
+                        # Create pandas dataframe
+                
+                    datas = {
+                    'datetime' : [datetime.now()],
+                    'tradeType': [tradeType],
+                    'asset' : [asset],
+                    'price' : [price],
+                    'fiatUnit' : [fiatUnit],
+                    'tradableQuantity' : [tradableQuantity],
+                    'minAmount' : [minSingleTransAmount],
+                    'maxAmount' : [dynamicMaxSingleTransAmount],
+                    'trader' : [nickName],
+                    'paymentMethod' : [tradeMethodName],
+                    'monthOrderCount' : [monthOrderCount],
+                    'monthFinishRate' : [monthFinishRate],
+                    'userType' : [userType],
+                    'userGrade' : [userGrade]
                     }
-                )
-
-            conn.commit()
-
-            conn.close()
-
-        elif tradeType_input == 'SELL' or tradeType_input == 'sell':
-
-            # Create sqlite3 database
-            conn = sqlite3.connect('data/data.db')
-
-            c = conn.cursor()
-
-            c.execute("""CREATE TABLE IF NOT EXISTS buy_price_chart(
-                        date text,
-                        tradeType text,
-                        asset text,
-                        price int,
-                        fiatUnit text,
-                        tradableQuantity float,
-                        minSingleTransAmount int,
-                        dynamicMaxSingleTransAmount int,
-                        nickName text,
-                        tradeMethodName text,
-                        monthOrderCount int,
-                        monthFinishRate float,
-                        userType text,
-                        userGrade int
-                )""")
-
-            c.execute("INSERT INTO buy_price_chart VALUES(:date, :tradeType, :asset, :price, :fiatUnit, :tradableQuantity, :minSingleTransAmount, :dynamicMaxSingleTransAmount, :nickName, :tradeMethodName, :monthOrderCount, :monthFinishRate, :userType, :userGrade)",
-                    {
-                        'date' : date,
-                        'tradeType' : tradeType,
-                        'asset' : asset,
-                        'price' : price,
-                        'fiatUnit' : fiatUnit,
-                        'tradableQuantity' : tradableQuantity,
-                        'minSingleTransAmount' : minSingleTransAmount,
-                        'dynamicMaxSingleTransAmount' : dynamicMaxSingleTransAmount,
-                        'nickName' : nickName,
-                        'tradeMethodName' : tradeMethodName,
-                        'monthOrderCount' : monthOrderCount,
-                        'monthFinishRate' : monthFinishRate,
-                        'userType' : userType,
-                        'userGrade' : userGrade
-                    }
-                )
-
-            conn.commit()
-
-            conn.close()
-
-    # Create sqlite3 database
-    conn = sqlite3.connect('data/data.db')
-
-    c = conn.cursor()
-
-    if tradeType_input == 'BUY' or tradeType_input == 'buy':
-
-        c.execute("SELECT oid,* FROM sell_price_chart ORDER BY date DESC LIMIT 1")
-        min_prices = c.fetchall()
-        for min_price in min_prices:
-            #min_price = min_price[4]
-            df = pd.DataFrame(min_price)
-            print(df)
-
-
-        c.execute("SELECT MIN(price),oid,* FROM sell_price")
-        min_prices = c.fetchall()
-        for min_price in min_prices:
-            print(min_price)
-
-        c.execute("SELECT oid,* FROM sell_price")
-        records = c.fetchall()
-        for record in records:
-            print(record)
-
-        c.execute("SELECT MAX(price),oid,* FROM sell_price")
-        max_prices = c.fetchall()
-        for max_price in max_prices:
-            print(max_price)
-
-        c.execute("SELECT * FROM sell_price ORDER BY date DESC LIMIT 1")
-        records = c.fetchall()
-        for record in records:
-            print(record)
-
-
-    elif tradeType_input == 'SELL' or tradeType_input == 'sell':
-
-        c.execute("SELECT oid,* FROM buy_price_chart ORDER BY date DESC LIMIT 1")
-        max_prices = c.fetchall()
-        for max_price in max_prices:
-            #max_price = max_price[4]
-            print(max_price)
-
-
-        c.execute("SELECT MAX(price),oid,* FROM buy_price")
-        max_prices = c.fetchall()
-        for max_price in max_prices:
-            print(max_price)
-
-        c.execute("SELECT oid,* FROM buy_price")
-        records = c.fetchall()
-        for record in records:
-            print(record)
-
-        c.execute("SELECT MIN(price),oid,* FROM buy_price")
-        min_prices = c.fetchall()
-        for min_price in min_prices:
-            print(min_price)
-
-        c.execute("SELECT * FROM buy_price ORDER BY date DESC LIMIT 1")
-        records = c.fetchall()
-        for record in records:
-            print(record)
-
-    conn.commit()
-
-    conn.close()
-
-    sleep(60 - time() % 60)
-
-
-# Create pandas dataframe
-datas = {
-    'datetime' : [datetime.now()],
-    'tradeType': [tradeType],
-    'asset' : [asset],
-    'price' : [price],
-    'fiatUnit' : [fiatUnit],
-    'tradableQuantity' : [tradableQuantity],
-    'minAmount' : [minSingleTransAmount],
-    'maxAmount' : [dynamicMaxSingleTransAmount],
-    'trader' : [nickName],
-    'paymentMethod' : [tradeMethodName],
-    'monthOrderCount' : [monthOrderCount],
-    'monthFinishRate' : [monthFinishRate],
-    'userType' : [userType],
-    'userGrade' : [userGrade]
-    }
-
-datass = [
-        count,
-        datetime.now(),
-        tradeType,
-        asset,
-        price,
-        fiatUnit,
-        tradableQuantity,
-        minSingleTransAmount,
-        dynamicMaxSingleTransAmount,
-        nickName,
-        tradeMethodName,
-        monthOrderCount,
-        monthFinishRate,
-        userType,
-        userGrade
-        ]
-
-df = pd.DataFrame.from_dict(datas, orient='columns')
-#df = pd.DataFrame(datas)
-#df = pd.DataFrame.from_dict(datas, orient='columns')  #orient='index',orient='columns', orient='tight'
-
-#df.to_csv('data/name.csv')
-print(df)
-
-print('----------------------------------------***----------------------------------------')
-print(f'{tradeType}')
-print(f'Price is                                {price} {fiatUnit}')
-#print(f'Asset is {asset}')
-#print(fiatUnit)
-print(f'Available {tradeType.lower()} amount is                {tradableQuantity} {asset}')
-print(f'{tradeType.capitalize()} limit is                           {minSingleTransAmount} {fiatUnit} ~ {dynamicMaxSingleTransAmount} {fiatUnit}')
-#print(dynamicMaxSingleTransAmount)
-print(f'Trader is                               {nickName}')
-print(f'Payment method is                       {tradeMethodName}')
-print(f'Trader monthly order is                 {monthOrderCount}')
-print(f'Trader monthly order completion is      {monthFinishRate*100} %')
-print(f'Trader type is                          {userType}')
-print(f'Trader grade is                         {userGrade}')
-
-print('----------------------------------------***----------------------------------------')
-'''
+                datass = [
+                        count,
+                        datetime.now(),
+                        tradeType,
+                        asset,
+                        price,
+                        fiatUnit,
+                        tradableQuantity,
+                        minSingleTransAmount,
+                        dynamicMaxSingleTransAmount,
+                        nickName,
+                        tradeMethodName,
+                        monthOrderCount,
+                        monthFinishRate,
+                        userType,
+                        userGrade
+                        ]
+                df = pd.DataFrame.from_dict(datas, orient='columns')
+                #df = pd.DataFrame(datas)
+                #df = pd.DataFrame.from_dict(datas, orient='columns')  #orient='index',orient='columns', orient='tight'
+                #df.to_csv('data/name.csv')
+                print(df)
+                print('----------------------------------------***----------------------------------------')
+                print(f'{tradeType}')
+                print(f'Price is                                {price} {fiatUnit}')
+                #print(f'Asset is {asset}')
+                #print(fiatUnit)
+                print(f'Available {tradeType.lower()} amount is                {tradableQuantity} {asset}')
+                print(f'{tradeType.capitalize()} limit is                           {minSingleTransAmount} {fiatUnit} ~ {dynamicMaxSingleTransAmount} {fiatUnit}')
+                #print(dynamicMaxSingleTransAmount)
+                print(f'Trader is                               {nickName}')
+                print(f'Payment method is                       {tradeMethodName}')
+                print(f'Trader monthly order is                 {monthOrderCount}')
+                print(f'Trader monthly order completion is      {monthFinishRate*100} %')
+                print(f'Trader type is                          {userType}')
+                print(f'Trader grade is                         {userGrade}')
+                print('----------------------------------------***----------------------------------------')
+                
+                sleep(60 - time() % 60)
