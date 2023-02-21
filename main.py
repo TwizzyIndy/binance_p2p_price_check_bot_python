@@ -13,7 +13,9 @@ print("|            CHOOSE NUMBER            |")
 print("=======================================")
 print("1) See all pages and all rows prices")
 print("2) See single row of first page price")
-choose = int(input("Choose 1 or 2: "))
+print("3) buy_price and sell_price table")
+print("4) buy_price_chart and sell_price_chart table")
+choose = int(input("Choose 1, 2, 3, or 4: "))
 
 # All Prices Function
 def all_prices():
